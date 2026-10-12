@@ -1,0 +1,538 @@
+<!-- Handoff: Created v3 Taiwan-first BMI calculator with default 繁體中文, dynamic 繁中 / EN language switcher, synced lang attributes, and seamless instant text updating; ready to use. -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMI 計算小工具</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --error-bg: #fef2f2;
+      --error-text: #b91c1c;
+      --underweight: #3b82f6;
+      --normal: #10b981;
+      --overweight: #f59e0b;
+      --obese: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .lang-switcher {
+      display: inline-flex;
+      background: #e2e8f0;
+      border-radius: 20px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      border-radius: 16px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn:hover {
+      color: var(--text);
+    }
+
+    .lang-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 48px 10px 12px;
+      font-size: 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .unit {
+      position: absolute;
+      right: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.05s;
+    }
+
+    .action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-calc {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-calc:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-reset {
+      background: #e2e8f0;
+      color: #334155;
+      flex: 0.45;
+    }
+
+    .btn-reset:hover {
+      background: #cbd5e1;
+    }
+
+    .alert {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .result-box {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      text-align: center;
+    }
+
+    .bmi-value-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .bmi-number {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin: 4px 0;
+      line-height: 1.1;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-top: 4px;
+    }
+
+    .badge.underweight { background-color: var(--underweight); }
+    .badge.normal { background-color: var(--normal); }
+    .badge.overweight { background-color: var(--overweight); }
+    .badge.obese { background-color: var(--obese); }
+
+    .scale-guide {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      font-size: 0.7rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .scale-item {
+      padding: 4px 2px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      line-height: 1.3;
+    }
+
+    .scale-item strong {
+      display: block;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="top-bar">
+      <div class="lang-switcher" role="group" aria-label="Language selection">
+        <button type="button" class="lang-btn active" id="btnZh" onclick="setLanguage('zh-TW')">繁中</button>
+        <button type="button" class="lang-btn" id="btnEn" onclick="setLanguage('en')">EN</button>
+      </div>
+    </div>
+
+    <header>
+      <h1 id="appTitle">BMI 計算小工具</h1>
+      <p class="subtitle" id="appSubtitle">身體質量指數計算機</p>
+    </header>
+
+    <form id="bmiForm" onsubmit="return false;">
+      <div class="form-group">
+        <label for="height" id="heightLabel">身高</label>
+        <div class="input-wrapper">
+          <input type="number" id="height" placeholder="例如 170" step="any" min="0" autofocus>
+          <span class="unit" id="heightUnit">cm</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="weight" id="weightLabel">體重</label>
+        <div class="input-wrapper">
+          <input type="number" id="weight" placeholder="例如 65" step="any" min="0">
+          <span class="unit" id="weightUnit">kg</span>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="action-btn btn-reset" id="resetBtn">重設</button>
+        <button type="submit" class="action-btn btn-calc" id="calcBtn">計算</button>
+      </div>
+    </form>
+
+    <div id="errorBox" class="alert" role="alert"></div>
+
+    <div id="resultBox" class="result-box" aria-live="polite">
+      <div class="bmi-value-label" id="resultLabel">你的 BMI</div>
+      <div class="bmi-number" id="bmiDisplay">--</div>
+      <div id="categoryBadge" class="badge">--</div>
+    </div>
+
+    <div class="scale-guide">
+      <div class="scale-item">
+        <strong>&lt; 18.5</strong>
+        <span id="scaleUnderweight">過輕</span>
+      </div>
+      <div class="scale-item">
+        <strong>18.5–23.9</strong>
+        <span id="scaleNormal">正常</span>
+      </div>
+      <div class="scale-item">
+        <strong>24.0–26.9</strong>
+        <span id="scaleOverweight">過重</span>
+      </div>
+      <div class="scale-item">
+        <strong>&ge; 27.0</strong>
+        <span id="scaleObese">肥胖</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const i18n = {
+      'zh-TW': {
+        pageTitle: 'BMI 計算小工具',
+        title: 'BMI 計算小工具',
+        subtitle: '身體質量指數計算機',
+        heightLabel: '身高',
+        heightPlaceholder: '例如 170',
+        weightLabel: '體重',
+        weightPlaceholder: '例如 65',
+        unitCm: 'cm',
+        unitKg: 'kg',
+        calcBtn: '計算',
+        resetBtn: '重設',
+        resultLabel: '你的 BMI',
+        scaleUnderweight: '過輕',
+        scaleNormal: '正常',
+        scaleOverweight: '過重',
+        scaleObese: '肥胖',
+        underweight: '過輕',
+        normal: '正常',
+        overweight: '過重',
+        obese: '肥胖',
+        errEmpty: '請輸入身高與體重。',
+        errPositive: '身高與體重數值必須大於 0。',
+        errHeightRange: '請輸入合理的身高數值 (30 - 300 cm)。',
+        errWeightRange: '請輸入合理的體重數值 (2 - 500 kg)。'
+      },
+      'en': {
+        pageTitle: 'BMI Calculator',
+        title: 'BMI Calculator',
+        subtitle: 'Body Mass Index Calculator',
+        heightLabel: 'Height',
+        heightPlaceholder: 'e.g. 170',
+        weightLabel: 'Weight',
+        weightPlaceholder: 'e.g. 65',
+        unitCm: 'cm',
+        unitKg: 'kg',
+        calcBtn: 'Calculate',
+        resetBtn: 'Reset',
+        resultLabel: 'Your BMI',
+        scaleUnderweight: 'Underweight',
+        scaleNormal: 'Normal',
+        scaleOverweight: 'Overweight',
+        scaleObese: 'Obese',
+        underweight: 'Underweight',
+        normal: 'Normal',
+        overweight: 'Overweight',
+        obese: 'Obese',
+        errEmpty: 'Please enter both height and weight.',
+        errPositive: 'Height and weight must be greater than 0.',
+        errHeightRange: 'Please enter a realistic height (30 - 300 cm).',
+        errWeightRange: 'Please enter a realistic weight (2 - 500 kg).'
+      }
+    };
+
+    let currentLang = 'zh-TW';
+    let currentErrorKey = null;
+    let currentCategoryKey = null;
+
+    const heightInput = document.getElementById('height');
+    const weightInput = document.getElementById('weight');
+    const calcBtn = document.getElementById('calcBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const errorBox = document.getElementById('errorBox');
+    const resultBox = document.getElementById('resultBox');
+    const bmiDisplay = document.getElementById('bmiDisplay');
+    const categoryBadge = document.getElementById('categoryBadge');
+
+    const appTitle = document.getElementById('appTitle');
+    const appSubtitle = document.getElementById('appSubtitle');
+    const heightLabel = document.getElementById('heightLabel');
+    const weightLabel = document.getElementById('weightLabel');
+    const heightUnit = document.getElementById('heightUnit');
+    const weightUnit = document.getElementById('weightUnit');
+    const resultLabel = document.getElementById('resultLabel');
+    const scaleUnderweight = document.getElementById('scaleUnderweight');
+    const scaleNormal = document.getElementById('scaleNormal');
+    const scaleOverweight = document.getElementById('scaleOverweight');
+    const scaleObese = document.getElementById('scaleObese');
+    const btnZh = document.getElementById('btnZh');
+    const btnEn = document.getElementById('btnEn');
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      document.title = i18n[lang].pageTitle;
+
+      if (lang === 'zh-TW') {
+        btnZh.classList.add('active');
+        btnEn.classList.remove('active');
+      } else {
+        btnEn.classList.add('active');
+        btnZh.classList.remove('active');
+      }
+
+      appTitle.textContent = i18n[lang].title;
+      appSubtitle.textContent = i18n[lang].subtitle;
+      heightLabel.textContent = i18n[lang].heightLabel;
+      heightInput.placeholder = i18n[lang].heightPlaceholder;
+      weightLabel.textContent = i18n[lang].weightLabel;
+      weightInput.placeholder = i18n[lang].weightPlaceholder;
+      heightUnit.textContent = i18n[lang].unitCm;
+      weightUnit.textContent = i18n[lang].unitKg;
+      calcBtn.textContent = i18n[lang].calcBtn;
+      resetBtn.textContent = i18n[lang].resetBtn;
+      resultLabel.textContent = i18n[lang].resultLabel;
+
+      scaleUnderweight.textContent = i18n[lang].scaleUnderweight;
+      scaleNormal.textContent = i18n[lang].scaleNormal;
+      scaleOverweight.textContent = i18n[lang].scaleOverweight;
+      scaleObese.textContent = i18n[lang].scaleObese;
+
+      if (currentErrorKey && errorBox.style.display !== 'none') {
+        errorBox.textContent = i18n[lang][currentErrorKey];
+      }
+
+      if (currentCategoryKey && resultBox.style.display !== 'none') {
+        categoryBadge.textContent = i18n[lang][currentCategoryKey];
+      }
+    }
+
+    function showError(errorKey) {
+      currentErrorKey = errorKey;
+      errorBox.textContent = i18n[currentLang][errorKey];
+      errorBox.style.display = 'block';
+      resultBox.style.display = 'none';
+    }
+
+    function clearError() {
+      currentErrorKey = null;
+      errorBox.textContent = '';
+      errorBox.style.display = 'none';
+    }
+
+    function calculateBMI() {
+      clearError();
+
+      const rawHeight = heightInput.value.trim();
+      const rawWeight = weightInput.value.trim();
+
+      if (!rawHeight || !rawWeight) {
+        showError('errEmpty');
+        return;
+      }
+
+      const height = parseFloat(rawHeight);
+      const weight = parseFloat(rawWeight);
+
+      if (height <= 0 || weight <= 0) {
+        showError('errPositive');
+        return;
+      }
+
+      if (height < 30 || height > 300) {
+        showError('errHeightRange');
+        return;
+      }
+
+      if (weight < 2 || weight > 500) {
+        showError('errWeightRange');
+        return;
+      }
+
+      const heightInMeters = height / 100;
+      const rawBmi = weight / (heightInMeters * heightInMeters);
+      const bmiFormatted = rawBmi.toFixed(1);
+
+      let badgeClass = '';
+
+      if (rawBmi < 18.5) {
+        currentCategoryKey = 'underweight';
+        badgeClass = 'underweight';
+      } else if (rawBmi < 24.0) {
+        currentCategoryKey = 'normal';
+        badgeClass = 'normal';
+      } else if (rawBmi < 27.0) {
+        currentCategoryKey = 'overweight';
+        badgeClass = 'overweight';
+      } else {
+        currentCategoryKey = 'obese';
+        badgeClass = 'obese';
+      }
+
+      bmiDisplay.textContent = bmiFormatted;
+      categoryBadge.textContent = i18n[currentLang][currentCategoryKey];
+      categoryBadge.className = 'badge ' + badgeClass;
+
+      resultBox.style.display = 'block';
+    }
+
+    function resetForm() {
+      heightInput.value = '';
+      weightInput.value = '';
+      clearError();
+      currentCategoryKey = null;
+      resultBox.style.display = 'none';
+      heightInput.focus();
+    }
+
+    calcBtn.addEventListener('click', calculateBMI);
+    resetBtn.addEventListener('click', resetForm);
+
+    [heightInput, weightInput].forEach(input => {
+      input.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          calculateBMI();
+        }
+      });
+    });
+
+    // Initialize with Traditional Chinese
+    setLanguage('zh-TW');
+  </script>
+</body>
+</html>
